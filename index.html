@@ -3,102 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fact of the Day</title>
+    <title>Random Facts Website</title>
     <style>
         body {
-            background-color: #f0f0f0;
-            color: #000;
-            font-family: 'Courier New', Courier, monospace;
-            text-align: center;
-            padding: 50px;
+            font-family: Arial, sans-serif;
+            background-color: #ffffff;
+            color: #000000;
+            margin: 0;
+            padding: 0;
         }
 
         .container {
-            border: 2px solid #000;
+            max-width: 800px;
+            margin: 20px auto;
             padding: 20px;
-            width: 50%;
-            margin: auto;
-            background-color: #fff;
-            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid #000000;
         }
 
-        h1 {
-            font-size: 2em;
+        header {
+            text-align: center;
             margin-bottom: 20px;
         }
 
-        p {
-            font-size: 1.2em;
-            line-height: 1.5;
+        h1 {
+            font-size: 2.5rem;
+        }
+
+        .fact-section {
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        #today-fact, #random-fact {
+            background-color: #ffffff;
+            border: 1px solid #000000;
+            padding: 10px;
+            font-size: 1.2rem;
+            line-height: 1.6;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Fact of the Day</h1>
-        <p id="fact"></p>
-        <p id="countdown"></p>
+        <header>
+            <h1>Facts</h1>
+        </header>
+        <section class="fact-section">
+            <h2>Today's Fact</h2>
+            <div id="today-fact"></div>
+        </section>
+        <section class="fact-section">
+            <h2>Random Fact</h2>
+            <div id="random-fact"></div>
+        </section>
     </div>
+
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            let fact = localStorage.getItem('factOfTheDay');
-            let lastUpdate = localStorage.getItem('lastUpdate');
-            let countdownEndTime = localStorage.getItem('countdownEndTime');
+        document.addEventListener("DOMContentLoaded", function() {
+            fetchFact("today-fact", "today");
+            fetchFact("random-fact", "random");
 
-            if (fact && lastUpdate && countdownEndTime) {
-                const now = new Date().getTime();
-                if (now < countdownEndTime) {
-                    displayFact(fact);
-                    startCountdown(countdownEndTime);
-                } else {
-                    fetchRandomFact();
-                }
-            } else {
-                fetchRandomFact();
-            }
-
-            function fetchRandomFact() {
-                fetch('https://uselessfacts.jsph.pl/today.json?language=en')
+            function fetchFact(elementId, type) {
+                fetch(`https://uselessfacts.jsph.pl/${type}.json?language=en`)
                     .then(response => response.json())
                     .then(data => {
-                        fact = data.text;
-                        localStorage.setItem('factOfTheDay', fact);
-                        const today = new Date().toISOString().slice(0, 10);
-                        localStorage.setItem('lastUpdate', today);
-                        const midnight = new Date();
-                        midnight.setHours(24, 0, 0, 0); // Set to midnight EST
-                        localStorage.setItem('countdownEndTime', midnight.getTime());
-                        displayFact(fact);
-                        startCountdown(midnight.getTime());
+                        document.getElementById(elementId).textContent = data.text;
                     })
                     .catch(error => {
-                        console.error('Error fetching fact:', error);
-                        document.getElementById('fact').innerText = 'Sorry, an error occurred while fetching the fact.';
+                        console.error('Error fetching data:', error);
+                        document.getElementById(elementId).textContent = "Failed to fetch the fact.";
                     });
-            }
-
-            function displayFact(fact) {
-                document.getElementById('fact').innerText = fact;
-            }
-
-            function startCountdown(endTime) {
-                // Update countdown every second
-                const countdownElement = document.getElementById('countdown');
-                updateCountdown();
-                setInterval(updateCountdown, 1000);
-
-                function updateCountdown() {
-                    const now = new Date().getTime();
-                    const timeLeft = endTime - now;
-                    if (timeLeft > 0) {
-                        const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
-                        const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
-                        const seconds = Math.floor((timeLeft / 1000) % 60);
-                        countdownElement.innerText = `Next fact in: ${hours}h ${minutes}m ${seconds}s`;
-                    } else {
-                        countdownElement.innerText = 'Updating...';
-                    }
-                }
             }
         });
     </script>
