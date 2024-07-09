@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fact of the Day</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            color: #000;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            padding: 50px;
+        }
+
+        .container {
+            border: 2px solid #000;
+            padding: 20px;
+            width: 50%;
+            margin: auto;
+            background-color: #fff;
+            box-shadow: 5px 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 1.2em;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Fact of the Day</h1>
+        <p id="fact"></p>
+        <p id="countdown"></p>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let fact = localStorage.getItem('factOfTheDay');
+            let lastUpdate = localStorage.getItem('lastUpdate');
+            let countdownEndTime = localStorage.getItem('countdownEndTime');
+
+            if (fact && lastUpdate && countdownEndTime) {
+                const now = new Date().getTime();
+                if (now < countdownEndTime) {
+                    displayFact(fact);
+                    startCountdown(countdownEndTime);
+                } else {
+                    fetchRandomFact();
+                }
+            } else {
+                fetchRandomFact();
+            }
+
+            function fetchRandomFact() {
+                fetch('https://uselessfacts.jsph.pl/random.json?language=en')
+                    .then(response => response.json())
+                    .then(data => {
+                        fact = data.text;
+                        localStorage.setItem('factOfTheDay', fact);
+                        const today = new Date().toISOString().slice(0, 10);
+                        localStorage.setItem('lastUpdate', today);
+                        const midnight = new Date();
+                        midnight.setHours(24, 0, 0, 0); // Set to midnight EST
+                        localStorage.setItem('countdownEndTime', midnight.getTime());
+                        displayFact(fact);
+                        startCountdown(midnight.getTime());
+                    })
+                    .catch(error => {
+                        console.error('Error fetching fact:', error);
+                        document.getElementById('fact').innerText = 'Sorry, an error occurred while fetching the fact.';
+                    });
+            }
+
+            function displayFact(fact) {
+                document.getElementById('fact').innerText = fact;
+            }
+
+            function startCountdown(endTime) {
+                // Update countdown every second
+                const countdownElement = document.getElementById('countdown');
+                updateCountdown();
+                setInterval(updateCountdown, 1000);
+
+                function updateCountdown() {
+                    const now = new Date().getTime();
+                    const timeLeft = endTime - now;
+                    if (timeLeft > 0) {
+                        const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+                        const minutes = Math.floor((timeLeft / (1000 * 60)) % 60);
+                        const seconds = Math.floor((timeLeft / 1000) % 60);
+                        countdownElement.innerText = `Next fact in: ${hours}h ${minutes}m ${seconds}s`;
+                    } else {
+                        countdownElement.innerText = 'Updating...';
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
